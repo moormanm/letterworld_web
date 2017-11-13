@@ -1,0 +1,66 @@
+{
+  "private": true,
+  "dependencies": {
+    "bluebird": "^3.5.1",
+    "body-parser": "^1.18.2",
+    "bootstrap3": "^3.3.5",
+    "dropzone": "^5.2.0",
+    "express": "^4.13.3",
+    "express-fileupload": "^0.3.0",
+    "jquery": "^3.2.1",
+    "list.js": "^1.5.0",
+    "phaser": "^2.4.4",
+    "shortid": "^2.2.8",
+    "sqlite": "^2.8.0"
+  },
+  "devDependencies": {
+    "audiosprite": "^0.5.0",
+    "babel-polyfill": "^6.0.16",
+    "babel-preset-env": "^1.6.1",
+    "babelify": "^7.2.0",
+    "babel-cli": "^6.26.0",
+    "browser-sync": "^2.7.0",
+    "browserify": "^12.0.0",
+    "chai": "^3.4.1",
+    "del": "^2.0.0",
+    "gulp": "^3.9.0",
+    "gulp-babel-minify": "^0.2.0",
+    "gulp-cached": "^1.1.0",
+    "gulp-concat": "^2.5.0",
+    "gulp-eslint": "^1.0.0",
+    "gulp-filter": "^3.0.0",
+    "gulp-load-plugins": "^1.0.0",
+    "gulp-notify": "^2.2.0",
+    "gulp-processhtml": "^1.1.0",
+    "gulp-rename": "^1.2.0",
+    "gulp-service": "0.0.3",
+    "gulp-sourcemaps": "^1.5.0",
+    "gulp-uglify": "^1.2.0",
+    "gulp-util": "^3.0.0",
+    "mocha": "^2.3.4",
+    "object-assign": "^4.0.1",
+    "require-dir": "^0.3.0",
+    "vinyl-buffer": "^1.0.0",
+    "vinyl-source-stream": "^1.1.0",
+    "watchify": "^3.3.1"
+  },
+  "scripts": {
+    "dist": "gulp dist",
+    "clean": "gulp dist:clean",
+    "start": "gulp default",
+    "start-express": "node server.js",
+    "audiosprite": "audiosprite -e m4a -f jukebox -g 3",
+    "audiosprite:sfx": "npm run audiosprite -- -o static/assets/sfx resources/sfx/*.wav",
+    "test": "mocha --compilers js:babel-core/register"
+  },
+  "browserify": {
+    "transform": [
+      "babelify"
+    ]
+  },
+  "name": "letterworld_web",
+  "version": "1.0.0",
+  "description": "letterworld",
+  "author": "Michael Moorman <michael.e.moorman@gmail.com>",
+  "main": "server.js"
+}
