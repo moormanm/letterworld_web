@@ -19,6 +19,18 @@ dialog {
 h1 {
    text-align: center;
 }
+.aligned {
+   text-align: center; 
+}
+a {
+  color: white; 
+}
+a:visited {
+    color: white;
+}
+a:link {
+    color: white;
+}
 
 .row {
    position: relative;
@@ -36,6 +48,10 @@ td {
 .saveWordsButton {
   color: white;
   background: black;
+}
+
+#errorMessages {
+  
 }
 
 main {

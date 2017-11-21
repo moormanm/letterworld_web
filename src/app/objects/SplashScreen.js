@@ -9,15 +9,28 @@
 
 class SplashScreen extends Phaser.Group {
 
-  constructor (game) {
-    super(game);
+   constructor(game) {
+      super(game);
 
-    this.classType = Phaser.Image;
 
-    this.create(0, 0, 'splash-screen');
-    this.progressBar = this.create(82, 282, 'progress-bar');
+      var sprite = game.add.sprite(game.width/2  , game.height/2 - 128, 'placeholder-asdf');
+      sprite.animations.add('walk');
+      sprite.animations.play('walk', 10, true);
 
-  }
+      var style = {
+         font: '24px Arial',
+         fill: 'white',
+         align: 'center',
+         boundsAlignH: 'center',
+         boundsAlignV: 'middle'
+      };
+      var text = this.game.add.text(sprite.x + sprite.width / 2, sprite.y + sprite.height, 'LETTER WORLD IS LOADING', style); +
+
+      this.add(sprite);
+      this.add(text);
+      
+
+   }
 
 }
 

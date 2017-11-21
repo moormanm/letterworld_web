@@ -5,7 +5,7 @@ assets = []
 for line in fileinput.input():
    line = line.strip();
    key = line[0 : line.find('.')];
-   url = "img/" + line;
+   url = "img/builtins/" + line;
    typ = "image";
    assets.append( {
       "key" : key,

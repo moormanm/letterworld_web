@@ -9,6 +9,7 @@
  */
 
 import assets from '../data/assets';
+import $ from "jquery";
 
 // To make matters easier, I prepared a SplashScreen class, responsible for
 // displaying the decorated splash screen graphic, and the progress bar.
@@ -34,21 +35,29 @@ export default class Preload extends Phaser.State {
   preload () {
     this.showSplashScreen();
     this.loadAssets();
+    var me = this;
+    $.ajax({
+         url: 'api/words/builtins',
+         type: 'get',
+         success: (data) => { me.builtins = data  },
+         error: console.err
+    });
 
+    
   }
 
   update () {
     // Wait until all sound effects have been decoded into memory.
-    if (this.allSoundsDecoded) {
-      this.state.start('Game');
+    if (this.allSoundsDecoded && this.builtins) {
+      this.state.start('Game', true, false, this.builtins);
     }
   }
 
   // --------------------------------------------------------------------------
 
   showSplashScreen () {
-    const { progressBar } = new SplashScreen(this.game);
-    this.load.setPreloadSprite(progressBar);
+    new SplashScreen(this.game);
+    
   }
 
   loadAssets () {

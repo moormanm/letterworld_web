@@ -16,15 +16,16 @@
 export default {
 
   // - Boot Assets ------------------------------------------------------------
-  boot: [{
-      key: 'splash-screen',
-      url: 'img/train.png',
-      type: 'image'
-    },
-    {
-      key: 'progress-bar',
-      url: 'img/progress-bar.png',
-      type: 'image'
+  boot: [
+
+        {
+      "key": "placeholder-asdf",
+      "type": "spritesheet",
+      "url": "assets/img/runningcat.png",
+      "frameWidth" : 512,
+      "frameHeight" : 256,
+      "margin" : 0,
+      "spacing" : 0
     }
   ],
 
@@ -32,13 +33,17 @@ export default {
   game: [
       {
       "key": "placeholder-asdf",
-      "type": "image",
-      "url": "img/train.png"
+      "type": "spritesheet",
+      "url": "assets/img/runningcat.png",
+      "frameWidth" : 512,
+      "frameHeight" : 256,
+      "margin" : 0,
+      "spacing" : 0
     },
     {
       key: "overlay-button",
       type: "spritesheet",
-      url: "img/overlay-button.png",
+      url: "assets/img/overlay-button.png",
       frameWidth: 80,
       frameHeight: 80,
       frameMax: 3
