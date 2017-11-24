@@ -217,6 +217,11 @@ router.post('/words/remove', async (req, res, next) => {
    }
 });
 
+router.get('/isvalidnamespace/:namespace', (req, res) => {
+   namespaceIsValid(req.params.namespace);
+   res.json({});
+});
+
 router.post('/words/add', async (req, res, next) => {
 
    var namespace = req.body.namespace;

@@ -10,6 +10,10 @@
 
 import assets from '../data/assets';
 import $ from "jquery";
+import Promise from 'bluebird';
+
+import CustomWordService from '../customwordservice';
+
 
 // To make matters easier, I prepared a SplashScreen class, responsible for
 // displaying the decorated splash screen graphic, and the progress bar.
@@ -17,69 +21,84 @@ import SplashScreen from '../objects/SplashScreen';
 
 // A helper function to extract how many sound effects need to be decoded
 // before loading the next game state.
-function getSoundsToDecode (packName) {
-  return assets[packName]
-    .filter(({ type }) => type === 'audio' || type === 'audiosprite')
-    .map(({ key }) => key);
+function getSoundsToDecode(packName) {
+   return assets[packName]
+      .filter(({ type }) => type === 'audio' || type === 'audiosprite')
+      .map(({ key }) => key);
 }
 
 
 export default class Preload extends Phaser.State {
 
-  init (packName = 'game') {
-    this.packName = packName;
+   init(packName = 'game') {
+      this.packName = packName;
 
-    this.soundsToDecode = getSoundsToDecode(packName);
-  }
+      this.soundsToDecode = getSoundsToDecode(packName);
+   }
 
-  preload () {
-    this.showSplashScreen();
-    this.loadAssets();
-    var me = this;
-    $.ajax({
+
+   async preload() {
+      let customWordService = new CustomWordService();
+      this.showSplashScreen();
+      this.loadAssets();
+
+      this.customWords = [];
+
+      await customWordService.enforceValidNamespaceinHash();
+      
+      this.customWords = await customWordService.getCustomWordsFromServer();
+
+      var me = this;
+      var p1;
+
+
+      //Get the builtins
+      p1 = $.ajax({
          url: 'api/words/builtins',
          type: 'get',
-         success: (data) => { me.builtins = data  },
+         success: (data) => { me.builtins = data },
          error: console.err
-    });
+      });
 
-    
-  }
+      await p1;
 
-  update () {
-    // Wait until all sound effects have been decoded into memory.
-    if (this.allSoundsDecoded && this.builtins) {
-      this.state.start('Game', true, false, this.builtins);
-    }
-  }
+      console.log('loading main game');
+      console.log(this.customWords);
+      this.state.start('Game', true, false, [this.builtins, this.customWords, 'hi']);
 
-  // --------------------------------------------------------------------------
+   }
 
-  showSplashScreen () {
-    new SplashScreen(this.game);
-    
-  }
+   update() {
 
-  loadAssets () {
-    this.load.pack(this.packName, null, assets);
-    
-    if (!this.allSoundsDecoded) {
-      this.sound.onSoundDecode.add((key) => this.dequeueDecodedSound(key));
-    }
-  }
+   }
 
-  dequeueDecodedSound (key) {
-    const position = this.soundsToDecode.indexOf(key);
+   // --------------------------------------------------------------------------
 
-    if (position > -1) {
-      this.soundsToDecode.splice(position, 1);
-    }
-  }
+   showSplashScreen() {
+      new SplashScreen(this.game);
 
-  // --------------------------------------------------------------------------
+   }
 
-  get allSoundsDecoded () {
-    return this.soundsToDecode.length === 0;
-  }
+   loadAssets() {
+      this.load.pack(this.packName, null, assets);
+
+      if (!this.allSoundsDecoded) {
+         this.sound.onSoundDecode.add((key) => this.dequeueDecodedSound(key));
+      }
+   }
+
+   dequeueDecodedSound(key) {
+      const position = this.soundsToDecode.indexOf(key);
+
+      if (position > -1) {
+         this.soundsToDecode.splice(position, 1);
+      }
+   }
+
+   // --------------------------------------------------------------------------
+
+   get allSoundsDecoded() {
+      return this.soundsToDecode.length === 0;
+   }
 
 }

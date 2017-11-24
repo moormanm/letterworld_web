@@ -163,8 +163,11 @@ export function initSettings() {
             addError(file.name + ' : ' + errorMessage);
          });
 
+         this.on('addedfile', () => {
+            $('#loadingSpinner').show();
+         });
          this.on('queuecomplete', () => {
-
+            $('#loadingSpinner').hide();
 
 
             //Did any images make it through?
@@ -264,6 +267,8 @@ export function initSettings() {
    window.wordAssociateToImageList = new List('word-associate-to-image-list', wordAssociateToImageListOptions)
 
    var loadSettingsOnSuccess = function(data) {
+      
+
       if (window.wordAssociateToImageList.size() == 0) {
          $('#step2').hide();
       }
