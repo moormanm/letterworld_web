@@ -24,6 +24,8 @@ var fs = require('fs');
 var path = require('path');
 var handlebars = require('handlebars');
 
+var builtins = [];
+
 var walkSync = function (dir, filelist) {
    var fs = fs || require('fs'),
        files = fs.readdirSync(dir);
@@ -162,18 +164,6 @@ var makeBuiltinWordsArray = function () {
    return ret;
 };
 
-var builtins = makeBuiltinWordsArray();
-
-//Download all audio that's needed
-async.eachSeries(builtins, function iteratee(item, callback) {
-   downloadSoundIfNeeded(item.word, callback);
-});
-
-var wordsHtmlTemplate;
-fs.readFile('templates/words.html', 'utf-8', function (error, source) {
-   wordsHtmlTemplate = handlebars.compile(source);
-});
-
 var port = process.env.PORT || 30010; // set our port
 
 // ROUTES FOR OUR API
@@ -286,6 +276,8 @@ router.post('/images/upload', function (req, res) {
    });
 });
 
+var wordsHtmlTemplate;
+
 app.get('/words.html', function (req, res) {
 
    res.send(wordsHtmlTemplate({ words: builtins }));
@@ -301,14 +293,28 @@ app.use('/imgStore', _express2.default.static('imgStore'));
 app.use('/builtins', _express2.default.static('builtins'));
 app.use('/soundStore', _express2.default.static('soundStore'));
 
+var initMethod = async function () {
+   await _sqlite2.default.open('./database.sqlite');
+   builtins = makeBuiltinWordsArray();
+   var customs = await _sqlite2.default.all('SELECT DISTINCT WORD FROM WORDS');
+   //Download all audio that's needed
+   async.eachSeries(builtins, function iteratee(item, callback) {
+      downloadSoundIfNeeded(item.word, callback);
+   });
+
+   //Download all audio that's needed for customs
+   async.eachSeries(customs, function iteratee(item, callback) {
+      downloadSoundIfNeeded(item.word, callback);
+   });
+
+   fs.readFile('templates/words.html', 'utf-8', function (error, source) {
+      wordsHtmlTemplate = handlebars.compile(source);
+   });
+};
+
 // START THE SERVER
 // =============================================================================
-
-_bluebird2.default.resolve()
-// First, try connect to the database 
-.then(() => _sqlite2.default.open('./database.sqlite', { Promise: _bluebird2.default })).catch(err => console.error(err.stack))
-// Finally, launch Node.js app 
-.finally(() => {
+_bluebird2.default.resolve().then(initMethod()).finally(() => {
    app.listen(port);
    console.log('Listening on port ' + port);
 });

@@ -52,7 +52,21 @@ export default class Game extends Phaser.State {
       this.letterworld.text = 'LETTER WORLD';
 
       var backspace = this.game.input.keyboard.addKey(Phaser.Keyboard.BACKSPACE);
-      backspace.onDown.add(function() { this.keyPress(Phaser.Keyboard.BACKSPACE); }, this);
+      var f2 = this.game.input.keyboard.addKey(Phaser.Keyboard.F2);
+      backspace.onDown.add(function() {
+         this.keyPress(Phaser.Keyboard.BACKSPACE);
+      }, this);
+
+      f2.onDown.add(function() {
+          if(this.autoPilotIsRunning) {
+             this.autoPilotIsRunning = false;
+          }
+          else {
+             this.startAutoPilot();
+          }
+          
+      }, this);
+
       this.game.input.keyboard.clearCaptures();
       this.enableKeyCapture = function(val) {
          if (!val) {
@@ -74,11 +88,16 @@ export default class Game extends Phaser.State {
 
       this.lastKeyPressedTime = 0;
       this.lastImageMatchedTime = 0;
+      this.autoPilotIsRunning = false;
 
       this.onSizeChange();
 
 
       this.showLetterWorld(true);
+
+      this.playThisSoundWhenDoneLoading = null;
+      this.showThisImageWhenDoneLoading = null;
+      this.allowMatching = true;
 
 
    }
@@ -90,10 +109,7 @@ export default class Game extends Phaser.State {
 
 
 
-
    update() {
-
-
 
 
 
@@ -141,7 +157,9 @@ export default class Game extends Phaser.State {
       window.wordList.clear();
       window.loadSettings();
 
-      window.dispatchEvent(new CustomEvent('showOverlay', { detail: 'myParams here' }));
+      window.dispatchEvent(new CustomEvent('showOverlay', {
+         detail: 'myParams here'
+      }));
       window.addEventListener('overlayClosed', function(e) {
          me.enableKeyCapture(true);
          var customWords = e.detail;
@@ -217,7 +235,6 @@ export default class Game extends Phaser.State {
 
 
 
-
       //is it loaded yet?
       if (!this.cache.checkKey(Phaser.Cache.IMAGE, entry.key)) {
          this.showLoadingSprite(true);
@@ -237,7 +254,6 @@ export default class Game extends Phaser.State {
 
 
 
-
       this.matchedImageGroup = this.game.add.group();
       this.matchedImageGroup.add(topLeft);
       //this.matchedImageGroup.add( bottomLeft );
@@ -252,10 +268,14 @@ export default class Game extends Phaser.State {
 
       //Top left tween
       tween = this.game.add.tween(topLeft);
-      tween.from({ x: 0 - topLeft.width }, tweenMoveTime, 'Linear', true, 0);
+      tween.from({
+         x: 0 - topLeft.width
+      }, tweenMoveTime, 'Linear', true, 0);
       tween.onComplete.add(function() {
          tween2 = me.game.add.tween(topLeft);
-         tween2.to({ x: 0 - topLeft.width }, tweenMoveTime, 'Linear', true, tweenDelay);
+         tween2.to({
+            x: 0 - topLeft.width
+         }, tweenMoveTime, 'Linear', true, tweenDelay);
       });
 
 
@@ -323,10 +343,11 @@ export default class Game extends Phaser.State {
 
       this.lastKeyPressedTime = this.game.time.totalElapsedSeconds();
 
+    
       //Check for matching image
       var key = this.text.text.toLowerCase();
       var entry = this.getPossibleImage(key);
-      if (entry != null) {
+      if (entry != null && this.allowMatching) {
          console.log('matched');
          console.log(entry);
          this.setMatchedImage(entry);
@@ -349,9 +370,12 @@ export default class Game extends Phaser.State {
       this.game.load.image(entry.key, entry.url);
       console.log('starting load for ')
       console.log(entry);
+
+      this.showThisImageWhenDoneLoading = entry.key;
       this.game.load.start();
 
    }
+
 
    playSound(cacheKey, params) {
       console.log(params);
@@ -359,7 +383,7 @@ export default class Game extends Phaser.State {
       //is it loaded yet?
       if (!this.cache.checkKey(Phaser.Cache.SOUND, cacheKey)) {
          console.log('sound not yet loaded, trying to load it');
-
+         this.playThisSoundWhenDoneLoading = cacheKey;
          this.game.load.audio(cacheKey, 'soundStore/' + cacheKey);
          this.game.load.start();
          return;
@@ -384,14 +408,19 @@ export default class Game extends Phaser.State {
       console.log('loaded ' + cacheKey);
       //Is it an image?
       var imageEntry = this.imageEntryFromCacheKey(cacheKey);
-      if (imageEntry != null) {
-         this.setMatchedImage(imageEntry);
+      if (imageEntry != null ) {
+         if(this.showThisImageWhenDoneLoading == cacheKey) {
+            this.setMatchedImage(imageEntry);
+         }
       } else {
          //sound
          console.log('loading sound');
          this.loadedSounds[cacheKey] = this.game.add.audio(cacheKey);
          console.log(this.loadedSounds[cacheKey]);
-         this.game.sound.setDecodedCallback([this.loadedSounds[cacheKey]], (params) => this.playSound(cacheKey, params), this);
+
+         if(this.playThisSoundWhenDoneLoading == cacheKey) {
+            this.game.sound.setDecodedCallback([this.loadedSounds[cacheKey]], (params) => this.playSound(cacheKey, params), this) ;
+         }
       }
    }
 
@@ -419,13 +448,73 @@ export default class Game extends Phaser.State {
       var newWords = {};
       var cacheEntryLookup = {};
       for (let x of words) {
-         var entry = { key: x.imageUrl, url: x.imageUrl, word: x.word };
+         var entry = {
+            key: x.imageUrl,
+            url: x.imageUrl,
+            word: x.word
+         };
          newWords[x.word.toLowerCase()] = entry;
          cacheEntryLookup[x.imageUrl] = entry;
       }
       //Todo : diff the new words and old words, purge the deleted ones from cache
       this.customWords = newWords;
       this.cacheEntryLookup = cacheEntryLookup;
+
+   }
+
+  
+   startAutoPilot() {
+      this.autoPilotIsRunning = true;
+      var me = this;
+      var keys = Object.keys(this.cacheEntryLookup).concat(Object.keys( this.builtIns));
+      
+
+      var startNewWord, nextLetter, preloadword;
+      nextLetter = function(word, i) {
+         if(!me.autoPilotIsRunning) {
+            me.allowMatching = true;
+            return;
+         }
+
+         if( i == word.length - 1) {
+            me.allowMatching = true;
+         }
+         
+         me.keyPress(word.charAt(i));        
+         if( i == word.length - 1) {
+            window.setTimeout(startNewWord, 7000);
+         }
+         else {
+            window.setTimeout( () => nextLetter(word, i+1), 620);
+         }
+      } 
+
+
+      startNewWord = function() { 
+         me.allowMatching = false;
+         var randomIndex = Math.floor(Math.random() * keys.length);
+         var word = keys[randomIndex];
+         preloadword(word);
+         me.text.text = '';
+         nextLetter(word,0);
+      };
+
+      preloadword = function(word) {
+         if (!me.cache.checkKey(Phaser.Cache.IMAGE, word)) {  
+            var imgEntry = me.imageEntryFromCacheKey(word);
+            me.game.load.image(imgEntry.key, imgEntry.url);
+         }       
+         var soundkey = word + '.mp3';
+         if (!me.cache.checkKey(Phaser.Cache.SOUND, soundkey)) {
+            me.game.load.audio(soundkey, 'soundStore/' + soundkey);
+            
+         }
+         me.game.load.start();
+      };
+
+     
+
+      startNewWord();
 
    }
 
@@ -442,6 +531,8 @@ export default class Game extends Phaser.State {
       return this.builtIns[cacheKey];
 
    }
+
+
 
 
 

@@ -10,20 +10,20 @@ var fs = require('fs');
 var path = require('path');
 var handlebars = require('handlebars');
 
+var builtins = [];
 
 var walkSync = function(dir, filelist) {
-  var fs = fs || require('fs'),
+   var fs = fs || require('fs'),
       files = fs.readdirSync(dir);
-  filelist = filelist || [];
-  files.forEach(function(file) {
-    if (fs.statSync(dir + file).isDirectory()) {
-      filelist = walkSync(dir + file + '/', filelist);
-    }
-    else {
-      filelist.push(file);
-    }
-  });
-  return filelist;
+   filelist = filelist || [];
+   files.forEach(function(file) {
+      if (fs.statSync(dir + file).isDirectory()) {
+         filelist = walkSync(dir + file + '/', filelist);
+      } else {
+         filelist.push(file);
+      }
+   });
+   return filelist;
 };
 
 
@@ -31,10 +31,10 @@ var walkSync = function(dir, filelist) {
 const app = express();
 
 // create a write stream (in append mode)
-var accessLogStream = fs.createWriteStream(path.join(__dirname, 'access.log'), {flags: 'a'})
+var accessLogStream = fs.createWriteStream(path.join(__dirname, 'access.log'), { flags: 'a' })
 
 // setup the logger
-app.use(morgan('combined', {stream: accessLogStream}))
+app.use(morgan('combined', { stream: accessLogStream }))
 
 
 var bodyParser = require('body-parser')
@@ -48,20 +48,20 @@ app.use(fileUpload());
 var shortid = require('shortid');
 
 
-gTTS.prototype.getPayload = function (part, idx) {
-  var self = this;
-  console.log('lollerskates!!');
-  return {
-    'ie' : 'UTF-8',
-    'q' : part,
-    'tl' : self.lang,
-    'ttsspeed' : 0.3,
-    'total' : self.text_parts.length,
-    'idx' : idx,
-    'client' : 'tw-ob',
-    'textlen' : part.length,
-    'tk' : self.token(part)
-  };
+gTTS.prototype.getPayload = function(part, idx) {
+   var self = this;
+   console.log('lollerskates!!');
+   return {
+      'ie': 'UTF-8',
+      'q': part,
+      'tl': self.lang,
+      'ttsspeed': 0.3,
+      'total': self.text_parts.length,
+      'idx': idx,
+      'client': 'tw-ob',
+      'textlen': part.length,
+      'tk': self.token(part)
+   };
 }
 
 
@@ -69,16 +69,16 @@ var namespaceIsValid = function(namespace) {
    if (namespace == undefined) {
       throw 'namespace element not defined';
    }
-   if ( /[^A-Z0-9a-z]+/.test(namespace) ) {
+   if (/[^A-Z0-9a-z]+/.test(namespace)) {
       throw 'namespace is not valid';
    }
    return true;
 }
 
 
- 
+
 var wordIsValid = function(word) {
-   if (! /[A-Z]+/.test(word)) {
+   if (!/[A-Z]+/.test(word)) {
       throw 'Word is not valid';
    }
 }
@@ -91,28 +91,27 @@ var imageIdToImageUrl = function(imageId) {
 };
 
 var downloadSoundIfNeeded = function(word, callback) {
-   existence( 
-      soundPath(word),  
-      () => { if(callback) callback(null, null); }, 
+   existence(
+      soundPath(word),
+      () => { if (callback) callback(null, null); },
       () => { startAudioDownload(word, callback) }
-    );
+   );
 };
 
 var existence = function(path, existsCallback, doesntExistCallback) {
    fs.stat(path, function(err, stats) {
-      
+
       //Check if error defined and the error code is "not exists"
       if (err && err.code == 'ENOENT') {
          doesntExistCallback();
-      } 
-      else {
+      } else {
          existsCallback();
       }
    });
 }
 
 
-var startAudioDownload = function(word,callback) {
+var startAudioDownload = function(word, callback) {
    var gtts = new gTTS(word, 'en');
    var soundFile = soundPath(word);
    gtts.save(soundFile, function(err, result) {
@@ -121,7 +120,7 @@ var startAudioDownload = function(word,callback) {
       } else {
          console.log('Success! Open file ' + soundFile);
       }
-      if(callback) {
+      if (callback) {
          callback(err, null);
       }
    });
@@ -130,24 +129,25 @@ var startAudioDownload = function(word,callback) {
 
 var acceptableExts = ['.jpg', '.jpeg', '.png'];
 
-var makeBuiltinWordsArray =  function() {
+
+var makeBuiltinWordsArray = function() {
    var ret = []
    var allFiles = walkSync('builtins/');
-   for(let f of allFiles) {
-      
-      if(f.lastIndexOf('.') == -1) {
+   for (let f of allFiles) {
+
+      if (f.lastIndexOf('.') == -1) {
          continue;
       }
 
-      var ext = f.substring( f.lastIndexOf('.') );
+      var ext = f.substring(f.lastIndexOf('.'));
 
-      if(! acceptableExts.some( (v) => { return ext.indexOf(v) >= 0} )) {
+      if (!acceptableExts.some((v) => { return ext.indexOf(v) >= 0 })) {
          continue;
       }
 
       var word = f.substring(0, f.lastIndexOf('.'))
 
-      ret.push( {
+      ret.push({
          word: word,
          key: word,
          url: 'builtins/' + f
@@ -156,20 +156,10 @@ var makeBuiltinWordsArray =  function() {
    }
    return ret;
 
-}; 
-
-var builtins = makeBuiltinWordsArray();
-
-//Download all audio that's needed
-async.eachSeries(builtins, function iteratee(item, callback) {
-    downloadSoundIfNeeded(item.word, callback);
-});
+};
 
 
-var wordsHtmlTemplate;
-fs.readFile('templates/words.html', 'utf-8', function(error, source){
-   wordsHtmlTemplate = handlebars.compile(source);
-});
+
 
 
 
@@ -180,7 +170,7 @@ var port = process.env.PORT || 30010; // set our port
 var router = express.Router(); // get an instance of the express Router
 
 router.get('/words/builtins', function(req, res) {
-   return res.json( builtins );
+   return res.json(builtins);
 });
 
 
@@ -228,7 +218,7 @@ router.post('/words/remove', async(req, res, next) => {
 });
 
 router.get('/isvalidnamespace/:namespace', (req, res) => {
-   namespaceIsValid( req.params.namespace );
+   namespaceIsValid(req.params.namespace);
    res.json({});
 });
 
@@ -242,10 +232,10 @@ router.post('/words/add', async(req, res, next) => {
 
       words.map(function(entry) {
          wordIsValid(entry.word);
-      }); 
+      });
 
-      
-      
+
+
       var promises;
       promises = words.map(function(entry) {
          //Delete any existing word for this namespace
@@ -264,7 +254,7 @@ router.post('/words/add', async(req, res, next) => {
 
       words.map(function(entry) {
          downloadSoundIfNeeded(entry.word);
-      });     
+      });
 
       res.send('Success');
 
@@ -307,10 +297,12 @@ router.post('/images/upload', function(req, res) {
 
 });
 
-app.get('/words.html', function(req,res) {
-   
-   res.send( wordsHtmlTemplate( { words: builtins } ));
-} );
+var wordsHtmlTemplate;
+
+app.get('/words.html', function(req, res) {
+
+   res.send(wordsHtmlTemplate({ words: builtins }));
+});
 
 // more routes for our API will happen here
 
@@ -323,15 +315,36 @@ app.use('/builtins', express.static('builtins'));
 app.use('/soundStore', express.static('soundStore'));
 
 
+
+var initMethod = async function() {
+   await db.open('./database.sqlite');
+   builtins = makeBuiltinWordsArray();
+   var customs = await db.all('SELECT DISTINCT WORD FROM WORDS');
+   //Download all audio that's needed
+   async.eachSeries(builtins, function iteratee(item, callback) {
+      downloadSoundIfNeeded(item.word, callback);
+   });
+
+   //Download all audio that's needed for customs
+   async.eachSeries(customs, function iteratee(item, callback) {
+      downloadSoundIfNeeded(item.word, callback);
+   });
+
+
+  
+   fs.readFile('templates/words.html', 'utf-8', function(error, source) {
+      wordsHtmlTemplate = handlebars.compile(source);
+   });
+
+
+};
+
+
 // START THE SERVER
 // =============================================================================
-
 Promise.resolve()
-   // First, try connect to the database 
-   .then(() => db.open('./database.sqlite', { Promise }))
-   .catch(err => console.error(err.stack))
-   // Finally, launch Node.js app 
+   .then(initMethod())
    .finally(() => {
       app.listen(port);
       console.log('Listening on port ' + port);
-   })
+   });

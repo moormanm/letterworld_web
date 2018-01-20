@@ -10,7 +10,7 @@
 
 import assets from '../data/assets';
 import $ from "jquery";
-import Promise from 'bluebird';
+
 
 import CustomWordService from '../customwordservice';
 
